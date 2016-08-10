@@ -22,6 +22,7 @@ import com.android.accessorydisplay.common.Transport;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Point;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaCodec;
@@ -34,8 +35,10 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.Surface;
+import android.view.WindowManager;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -82,8 +85,26 @@ public class DisplaySourceService extends Service {
         super.start();
 
         getLogger().log("Sending MSG_QUERY.");
-        getTransport().sendMessage(Protocol.DisplaySinkService.ID,
+        if(true) {
+        	getTransport().sendMessage(Protocol.DisplaySinkService.ID,
                 Protocol.DisplaySinkService.MSG_QUERY, null);
+        } else {
+        	ByteBuffer mBuf = ByteBuffer.allocate(32);
+        	mBuf.clear();
+        	WindowManager wm = (WindowManager) getContext()
+                    .getSystemService(Context.WINDOW_SERVICE);
+        	Point outSize = new Point();
+        	wm.getDefaultDisplay().getSize(outSize);
+        	mBuf.putInt(outSize.x);// width
+			mBuf.putInt(outSize.y);// height
+			
+        	DisplayMetrics outMetrics = new DisplayMetrics();
+        	wm.getDefaultDisplay().getMetrics(outMetrics);
+			mBuf.putInt(outMetrics.densityDpi);// dpi
+			
+        	getTransport().sendMessage(Protocol.DisplaySinkService.ID,
+                        Protocol.DisplaySinkService.MSG_QUERY_EXT, mBuf);
+        }
     }
 
     @Override
@@ -116,6 +137,10 @@ public class DisplaySourceService extends Service {
             case Protocol.DisplaySourceService.MSG_SINK_NOT_AVAILABLE: {
                 getLogger().log("Received MSG_SINK_NOT_AVAILABLE");
                 handleSinkNotAvailable();
+                break;
+            }
+            case Protocol.DisplaySourceService.MSG_SINK_INJECT_EVENT: {
+                getLogger().log("Received MSG_SINK_INJECT_EVENT");
                 break;
             }
         }

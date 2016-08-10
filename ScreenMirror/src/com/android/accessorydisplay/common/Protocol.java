@@ -46,6 +46,8 @@ public class Protocol {
 
         // Send MPEG2-TS H.264 encoded content.
         public static final int MSG_CONTENT = 2;
+        
+        public static final int MSG_QUERY_EXT = 100;
     }
 
     public static final class DisplaySourceService {
@@ -61,5 +63,8 @@ public class Protocol {
 
         // Sink is no longer available for use.
         public static final int MSG_SINK_NOT_AVAILABLE = 2;
+        
+     // Sink is no longer available for use.
+        public static final int MSG_SINK_INJECT_EVENT = 100;
     }
 }
