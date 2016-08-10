@@ -23,6 +23,7 @@ Android USB Accessory,lvhwa0716@163.com
     b. run this file
     c. run ffplay /tmp/android_accessory_display.pipe on ubuntu.
 	   prebuilt ffplay support video sync , it show slow then phone.
+	   getcode : https://github.com/FFmpeg/FFmpeg
 	   fixed it(not use video sync) : get ffmpeg source 
 		 modify ffplay.c like follow :
 			time= av_gettime_relative()/1000000.0;
@@ -31,7 +32,6 @@ Android USB Accessory,lvhwa0716@163.com
                 //goto display; // == mask this line
             
             }
-
             is->frame_timer += delay;
 
 
