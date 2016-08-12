@@ -385,7 +385,7 @@ class AndroidAccessoryDisplay:
                 _code = 0
             if ie.status == 0: # Key release
                 _code = 0
-            _bytes = struct.pack("!8B", self._key_status, 0, _code, 0, 0, 0, 0, 0)
+            _bytes = struct.pack("8B", self._key_status, 0, _code, 0, 0, 0, 0, 0)
 
             self._device.ctrl_transfer(bmRequestType = 0x40,
                          bRequest = self.ACCESSORY_SEND_HID_EVENT,
@@ -397,7 +397,8 @@ class AndroidAccessoryDisplay:
             if ie.status == 0 and self._touch_status == 0: # no need send
                 return
             self._touch_status = ie.status
-            _bytes = struct.pack("!3B2H2B2HB", 1, ie.status, 1, ie.x, ie.y, 0, 0, 0, 0, 1)
+            _bytes = struct.pack("4B2H2B2HB",0x7F, 1, ie.status, 1, ie.x, ie.y, 0, 0, 0, 0, 1)
+            _bytes = _bytes[1:] # need align
             self._device.ctrl_transfer(bmRequestType = 0x40,
                          bRequest = self.ACCESSORY_SEND_HID_EVENT,
                          wValue = self.TOUCH_DEVICE_ID,
@@ -782,7 +783,7 @@ class AndroidEventInject:
                 self.y = (int)(1.0 * (self.y - _v_y) * 32768 / _v_h)
                 if self.x < 0 or self.y < 0 or self.x > 32768 or self.y > 32768:
                     self.type = 0
-                print("Event Touch : ",self.type, self.status, self.code, self.x,self.y )
+                #print("Event Touch : ",self.type, self.status, self.code, self.x,self.y )
             except Exception as e:
                 self.type = 0
 
