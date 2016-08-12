@@ -246,12 +246,16 @@ public class DisplaySourceService extends Service {
             codec.start();
 
             VirtualDisplay virtualDisplay = null;
-            if(mMediaProjection != null) {
-            	virtualDisplay = mMediaProjection.createVirtualDisplay(
-                        DISPLAY_NAME, mWidth, mHeight, mDensityDpi, DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,surface,null,null);
-            } else {
-            	virtualDisplay = mDisplayManager.createVirtualDisplay(
-                    DISPLAY_NAME, mWidth, mHeight, mDensityDpi, surface, 0);
+            try {
+	            if(mMediaProjection != null) {
+	            	virtualDisplay = mMediaProjection.createVirtualDisplay(
+	                        DISPLAY_NAME, mWidth, mHeight, mDensityDpi, DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,surface,null,null);
+	            } else {
+	            	virtualDisplay = mDisplayManager.createVirtualDisplay(
+	                    DISPLAY_NAME, mWidth, mHeight, mDensityDpi, surface, 0);
+	            }
+            } catch (Exception e){
+            	getLogger().log("Create VirtualDisplay Error : " + e.toString());
             }
             if (virtualDisplay != null) {
                 mHandler.obtainMessage(MSG_DISPATCH_DISPLAY_ADDED,

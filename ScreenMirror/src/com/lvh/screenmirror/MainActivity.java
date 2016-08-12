@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.hardware.usb.UsbAccessory;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Menu;
@@ -19,6 +20,7 @@ public class MainActivity extends Activity {
 	private static final String TAG = "ScreenMirror-MainActivity";
 	private TextView mLogTextView;
 	private Logger mLogger;
+	private Handler mHandler = new Handler();
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -35,7 +37,6 @@ public class MainActivity extends Activity {
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
 		mLogger.log( "onNewIntent: " + intent);
-		setIntent(intent);
 		processIntent(intent);
 
 	}
@@ -62,9 +63,17 @@ public class MainActivity extends Activity {
 	private void processIntent(Intent intent) {
 		UsbManager mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
 		if (intent.getAction().equals(ScreenMirrorService.ACTION_NAME)) {
-			Intent prj_intent = intent.<Intent> getParcelableExtra(Intent.EXTRA_INTENT);
-			mLogger.log( "Intent:" + prj_intent);
-			startActivityForResult(prj_intent,PERMISSION_CODE);
+			final Intent _intent = intent;
+			mHandler.postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					Intent prj_intent = _intent.<Intent> getParcelableExtra(Intent.EXTRA_INTENT);
+					mLogger.log( "MediaProjectIntent:" + prj_intent);
+					startActivityForResult(prj_intent,PERMISSION_CODE);
+					return;
+				}
+			},500);
+			
 		}
 		else if (intent.getAction().equals(UsbManager.ACTION_USB_ACCESSORY_ATTACHED)) {
 			UsbAccessory accessory = (UsbAccessory) intent

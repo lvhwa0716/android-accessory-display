@@ -21,8 +21,9 @@
         android:theme="@style/AppTheme" >
         <activity
             android:name=".MainActivity"
-            android:launchMode="singleTask"
-            android:label="@string/app_name" >
+            android:label="@string/app_name"
+            android:configChanges="orientation"
+            android:launchMode="singleTask" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -36,11 +37,6 @@
             <meta-data
                 android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"
                 android:resource="@xml/usb_accessory_filter" />
-        </activity>
-        <activity
-            android:name=".MediaProjectAccept"
-            android:launchMode="singleInstance"
-            android:label="@string/mediaprj_name" >
         </activity>
 
         <receiver android:name=".ScreenMirrorReceiver" >

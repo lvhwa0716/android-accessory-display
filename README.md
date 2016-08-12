@@ -1,5 +1,8 @@
 # android-accessory-display
-Android USB Accessory,lvhwa0716@163.com
+    Android USB Accessory,lvhwa0716@163.com
+    a. Mirror Android Device Screen to PC Monitor 
+    b. Enter words by PC Keyboard
+    c. PC Mouse actor as multi-touch
 # Host Required
     python 2.7 & ubuntu 14.04LTS
 # 1. install libusb
@@ -22,6 +25,7 @@ Android USB Accessory,lvhwa0716@163.com
         or modify com.android.accessorydisplay.common.Protocol.MAX_ENVELOPE_SIZE more larger
     b. run this file
     c. run ffplay /tmp/android_accessory_display.pipe on ubuntu.
+       ffplay -f h264 -vcodec h264 -sn -an /tmp/android_accessory_display.pipe
 	   prebuilt ffplay support video sync , it show slow then phone.
 	   getcode : https://github.com/FFmpeg/FFmpeg
 	   fixed it(not use video sync) : get ffmpeg source 

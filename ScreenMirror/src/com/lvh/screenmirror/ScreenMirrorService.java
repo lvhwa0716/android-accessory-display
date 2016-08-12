@@ -44,9 +44,23 @@ public class ScreenMirrorService extends Service {
 	private static final String MANUFACTURER = "Android";
 	private static final String MODEL = "Accessory Display";
 
+	private MediaProjection.Callback mMediaProjectionCallback = new MediaProjection.Callback() {
+		@Override
+		public void onStop() {
+
+			mHandler.post(new Runnable() {
+				@Override
+				public void run() {
+					mMediaProjection = null;
+					mLogger.logError("MediaProjection Destroy, reconnect");
+					reConnect();
+				}
+			});
+		}
+	};
+
 	private static boolean isSink(UsbAccessory accessory) {
-		return MANUFACTURER.equals(accessory.getManufacturer())
-				&& MODEL.equals(accessory.getModel());
+		return MANUFACTURER.equals(accessory.getManufacturer()) && MODEL.equals(accessory.getModel());
 	}
 
 	private void release() {
@@ -55,7 +69,7 @@ public class ScreenMirrorService extends Service {
 			mLogger.log("ScreenMirrorService release");
 			mConnected = false;
 			mAccessory = null;
-			if(mMediaProjection != null) {
+			if (mMediaProjection != null) {
 				mMediaProjection.stop();
 				mMediaProjection = null;
 			}
@@ -71,6 +85,8 @@ public class ScreenMirrorService extends Service {
 	}
 
 	public void accessoryAttached(UsbAccessory accessory) {
+		if (accessory == null)
+			return;
 		mLogger.log("Attached:" + accessory.toString());
 		mLogger.log("mMediaProjection:" + mMediaProjection);
 
@@ -92,7 +108,7 @@ public class ScreenMirrorService extends Service {
 				return;
 			}
 			if (mMediaProjection == null) {
-				//Intent intent = new Intent(getBaseContext(), MediaProjectAccept.class);
+
 				Intent intent = new Intent(getBaseContext(), MainActivity.class);
 				intent.setAction(ACTION_NAME);
 				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -119,19 +135,7 @@ public class ScreenMirrorService extends Service {
 			mAccessory = accessory;
 			mTransport = new UsbAccessoryStreamTransport(mLogger, fd, mEventNotify);
 			mDisplaySourceService = new DisplaySourceService(this, mTransport, mMediaProjection);
-			mMediaProjection.registerCallback( new MediaProjection.Callback() {
-				@Override
-				public void onStop() { 
-					mMediaProjection = null;
-					mHandler.post(new Runnable() {
-						@Override
-						public void run() {
-							mLogger.logError("MediaProjection Destroy, reconnect");
-							reConnect();
-						}
-					});
-				}
-			}, null);
+			mMediaProjection.registerCallback(mMediaProjectionCallback, null);
 			mDisplaySourceService.start();
 			mTransport.startReading();
 		}
@@ -158,8 +162,7 @@ public class ScreenMirrorService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if (intent != null) {
-			final UsbAccessory accessory = intent
-					.<UsbAccessory> getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
+			final UsbAccessory accessory = intent.<UsbAccessory> getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
 			int cmd = intent.getIntExtra(CMD_NAME, -1);
 			mLogger.log("onStartCommand : CMD = " + cmd);
 
@@ -184,17 +187,18 @@ public class ScreenMirrorService extends Service {
 			}
 				break;
 			case CMD_MEDIAPROJECT: {
-				final Intent data = intent
-						.<Intent> getParcelableExtra(Intent.EXTRA_INTENT);
-				final int resultCode = intent.getIntExtra(
-						ScreenMirrorService.RESULT_CODE, 0);
+				final Intent data = intent.<Intent> getParcelableExtra(Intent.EXTRA_INTENT);
+				final int resultCode = intent.getIntExtra(ScreenMirrorService.RESULT_CODE, 0);
 				if (data != null) {
 					mHandler.post(new Runnable() {
 						@Override
 						public void run() {
-							mMediaProjection = mMediaProjectionManager
-									.getMediaProjection(resultCode, data);
-							accessoryAttached(mLastAccessory);
+							if (mMediaProjection == null) {
+								mMediaProjection = mMediaProjectionManager.getMediaProjection(resultCode, data);
+								accessoryAttached(mLastAccessory);
+							} else {
+								mLogger.log("onStartCommand : Ignore new MediaProject" );
+							}
 						}
 					});
 				}
@@ -216,8 +220,7 @@ public class ScreenMirrorService extends Service {
 		if (mConnected) {
 			accessoryDetached(mAccessory);
 			// search accessory
-			UsbAccessory[] accessories = mUsbManager
-					.getAccessoryList();
+			UsbAccessory[] accessories = mUsbManager.getAccessoryList();
 			if (accessories != null) {
 				for (UsbAccessory accessory : accessories) {
 					if (isSink(accessory))
@@ -226,6 +229,7 @@ public class ScreenMirrorService extends Service {
 			}
 		}
 	}
+
 	private class ServiceEventNotify extends EventNotify {
 		public ServiceEventNotify() {
 
@@ -238,7 +242,7 @@ public class ScreenMirrorService extends Service {
 				@Override
 				public void run() {
 					mLogger.logError("eventIOError reconnect");
-					if( (mConnected) && (mAccessory != null) ){
+					if ((mConnected) && (mAccessory != null)) {
 						accessoryDetached(mAccessory);
 					}
 				}
