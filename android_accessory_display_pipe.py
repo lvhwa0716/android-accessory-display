@@ -26,7 +26,7 @@
     c. run ffplay /tmp/android_accessory_display.pipe on ubuntu.
        ffplay -f h264 -vcodec h264 -sn -an /tmp/android_accessory_display.pipe
        prebuilt ffplay support video sync , it show slow then phone.
-       fixed it(not use video sync) : get ffmpeg source 
+       fixed it(not use video sync) : get ffmpeg source
          modify ffplay.c like follow :
             time= av_gettime_relative()/1000000.0;
             if (time < is->frame_timer + delay) {
@@ -35,6 +35,8 @@
             }
 
             is->frame_timer += delay;
+
+    Note : default use multi-touch hid, if phone not support please set _support_touch = 2 , drag and double click will work
 
 
 """
@@ -86,13 +88,17 @@ class AndroidAccessoryDisplay:
     _accessory_pid = 0x2d01
     _accessory_vid = 0x18d1
 
+    # _support_touch = 0 : not support, 1 : multi-touch , 2 : single-touch,
     _support_touch = 1
+    # _support_touch =  0 : not support, 1 : 101 keyboard
     _support_keyboard = 1
+    _support_single_touch = 1
     ACCESSORY_REGISTER_HID = 54
     ACCESSORY_SET_HID_REPORT_DESC = 56
     ACCESSORY_SEND_HID_EVENT = 57
     TOUCH_DEVICE_ID = 0
     KEYBOARD_DEVICE_ID = 1
+    SINGLE_TOUCH_DEVICE_ID = 2
 
     # when auto detect failed ,add vid, pid here
     _android_device_list = [
@@ -170,7 +176,7 @@ class AndroidAccessoryDisplay:
             raise usb.core.USBError('Device Configure Error')
 
         # config HID
-        if self._support_touch != 0:
+        if self._support_touch == 1:
             self._device.ctrl_transfer(bmRequestType = 0x40,
                              bRequest = self.ACCESSORY_REGISTER_HID,
                              wValue = self.TOUCH_DEVICE_ID,
@@ -180,7 +186,18 @@ class AndroidAccessoryDisplay:
                              wValue = self.TOUCH_DEVICE_ID,
                              wIndex = 0,
                              data_or_wLength = AndroidEventInject.MultTouchReportDescriptor)
-        if self._support_keyboard != 0:
+        elif self._support_touch == 2:
+            self._device.ctrl_transfer(bmRequestType = 0x40,
+                             bRequest = self.ACCESSORY_REGISTER_HID,
+                             wValue = self.SINGLE_TOUCH_DEVICE_ID,
+                             wIndex = len(AndroidEventInject.SingleTouchReportDescriptor))
+            self._device.ctrl_transfer(bmRequestType = 0x40,
+                             bRequest = self.ACCESSORY_SET_HID_REPORT_DESC,
+                             wValue = self.SINGLE_TOUCH_DEVICE_ID,
+                             wIndex = 0,
+                             data_or_wLength = AndroidEventInject.SingleTouchReportDescriptor)
+
+        if self._support_keyboard == 1:
             self._device.ctrl_transfer(bmRequestType = 0x40,
                              bRequest = self.ACCESSORY_REGISTER_HID,
                              wValue = self.KEYBOARD_DEVICE_ID,
@@ -397,13 +414,26 @@ class AndroidAccessoryDisplay:
             if ie.status == 0 and self._touch_status == 0: # no need send
                 return
             self._touch_status = ie.status
-            _bytes = struct.pack("4B2H2B2HB",0x7F, 1, ie.status, 1, ie.x, ie.y, 0, 0, 0, 0, 1)
-            _bytes = _bytes[1:] # need align
-            self._device.ctrl_transfer(bmRequestType = 0x40,
-                         bRequest = self.ACCESSORY_SEND_HID_EVENT,
-                         wValue = self.TOUCH_DEVICE_ID,
-                         wIndex = 0,
-                         data_or_wLength = _bytes)
+            if self._support_touch == 1:
+                _bytes = struct.pack("4B2H2B2HB",0x7F, 1, ie.status, 1, ie.x, ie.y, 0, 0, 0, 0, 1)
+                _bytes = _bytes[1:] # need align
+                self._device.ctrl_transfer(bmRequestType = 0x40,
+                             bRequest = self.ACCESSORY_SEND_HID_EVENT,
+                             wValue = self.TOUCH_DEVICE_ID,
+                             wIndex = 0,
+                             data_or_wLength = _bytes)
+            elif self._support_touch == 2:
+                _inrange = 0
+                if ie.status !=0:
+                    _inrange = 0x08
+                _bytes = struct.pack("4B2H", 0x7F, 1, ie.status, 0, ie.x, ie.y)
+                _bytes = _bytes[1:] # need align
+
+                self._device.ctrl_transfer(bmRequestType = 0x40,
+                             bRequest = self.ACCESSORY_SEND_HID_EVENT,
+                             wValue = self.SINGLE_TOUCH_DEVICE_ID,
+                             wIndex = 0,
+                             data_or_wLength = _bytes)
 
     @staticmethod
     def process(aad, width, height, dpi):
@@ -658,6 +688,7 @@ class AndroidEventInject:
 
         0xC0  ## End Collection (Application)
     ])
+    REPORTID_TOUCH = 1
     REPORTID_MTOUCH = 1
     REPORTID_MOUSE = 3
     REPORTID_FEATURE = 7
@@ -739,9 +770,49 @@ class AndroidEventInject:
         0x95, 0x1d,                         ##   REPORT_COUNT (29)
         0x81, 0x03,                         ##   INPUT (Cnst,Var,Abs)
         0xc0,                               ## END_COLLECTION
-
-
         # };
+    ])
+
+    SingleTouchReportDescriptor = bytearray([
+        0x05, 0x0d,                    ##// USAGE_PAGE (Digitizers)
+        0x09, 0x04,                    ##// USAGE (Touch Screen)
+        0xa1, 0x01,                    ##// COLLECTION (Application)
+        0x85, 0x01,                    ##//   REPORT_ID (1)
+        0x09, 0x20,                    ##//   USAGE (Stylus)
+        0xa1, 0x00,                    ##//   COLLECTION (Physical)
+        0x09, 0x42,                    ##//     USAGE (Tip Switch)
+        0x15, 0x00,                    ##//     LOGICAL_MINIMUM (0)
+        0x25, 0x01,                    ##//     LOGICAL_MAXIMUM (1)
+        0x75, 0x01,                    ##//     REPORT_SIZE (1)
+        0x95, 0x01,                    ##//     REPORT_COUNT (1)
+        0x81, 0x02,                    ##//     INPUT (Data,Var,Abs)
+        0x95, 0x03,                    ##//     REPORT_COUNT (3)
+        0x81, 0x01,                    ##//     INPUT (Cnst,Ary,Abs)
+        0x09, 0x32,                    ##//     USAGE (In Range)
+        0x09, 0x37,                    ##//     USAGE (Data Valid)
+        0x95, 0x02,                    ##//     REPORT_COUNT (2)
+        0x81, 0x03,                    ##//     INPUT (Cnst,Var,Abs)
+        0x95, 0x0a,                    ##//     REPORT_COUNT (10)
+        0x81, 0x01,                    ##//     INPUT (Cnst,Ary,Abs)
+        0x05, 0x01,                    ##//     USAGE_PAGE (Generic Desktop)
+        0x15, 0x00,                    ##//     LOGICAL_MINIMUM (0)
+        0x26, 0xff, 0x7f,              ##//     LOGICAL_MAXIMUM (32767)
+        0x75, 0x10,                    ##//     REPORT_SIZE (16)
+        0x95, 0x01,                    ##//     REPORT_COUNT (1)
+        0xa4,                          ##//     PUSH
+        0x55, 0x0d,                    ##//     UNIT_EXPONENT (-3)
+        0x65, 0x00,                    ##//     UNIT (None)
+        0x09, 0x30,                    ##//     USAGE (X)
+        0x35, 0x00,                    ##//     PHYSICAL_MINIMUM (0)
+        0x45, 0x00,                    ##//     PHYSICAL_MAXIMUM (0)
+        0x81, 0x02,                    ##//     INPUT (Data,Var,Abs)
+        0x09, 0x31,                    ##//     USAGE (Y)
+        0x35, 0x00,                    ##//     PHYSICAL_MINIMUM (0)
+        0x45, 0x00,                    ##//     PHYSICAL_MAXIMUM (0)
+        0x81, 0x02,                    ##//     INPUT (Data,Var,Abs)
+        0xb4,                          ##//     POP
+        0xc0,                           ##//     END_COLLECTION
+        0xc0                           ##//     END_COLLECTION
     ])
 
     def __init__(self, rawbytes):
