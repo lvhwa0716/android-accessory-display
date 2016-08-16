@@ -19,8 +19,10 @@
     SUBSYSTEM=="usb", ATTR{idVendor}=="2717", ATTR{idProduct}=="ff68", MODE="0666", OWNER="<username>"
     SUBSYSTEM=="usb", ATTR{idVendor}=="2717", ATTR{idProduct}=="ff48", MODE="0666", OWNER="<username>"
     or used sudo when permission exception
+
 # 5. run
-	enable USB debug on phone
+	enable USB debug on phone, connect phone to PC with usb cable .
+	First must check adb connect is OK (eg use command: adb shell ls)
     a. aosp/frameworks/base/tests/AccessoryDisplay on phone
         when use this , screen size must less 320x240,
         or modify com.android.accessorydisplay.common.Protocol.MAX_ENVELOPE_SIZE more larger
