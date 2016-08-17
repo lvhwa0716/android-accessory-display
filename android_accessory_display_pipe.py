@@ -22,9 +22,8 @@
     a. aosp/frameworks/base/tests/AccessoryDisplay on phone
         when use this , screen size must less 320x240,
         or modify com.android.accessorydisplay.common.Protocol.MAX_ENVELOPE_SIZE more larger
-    b. run this file
-    c. run ffplay /tmp/android_accessory_display.pipe on ubuntu.
-       ffplay -f h264 -vcodec h264 -sn -an /tmp/android_accessory_display.pipe
+    b. run ffplay on ubuntu.
+       ./ffplay -f h264 -vcodec h264 -sn -an /tmp/android_accessory_display.pipe
        prebuilt ffplay support video sync , it show slow then phone.
        fixed it(not use video sync) : get ffmpeg source
          modify ffplay.c like follow :
@@ -35,6 +34,7 @@
             }
 
             is->frame_timer += delay;
+    c. run this file
 
     Note : default use multi-touch hid, if phone not support please set _support_touch = 2 , drag and double click will work
 
@@ -901,7 +901,7 @@ if __name__ == '__main__':
 
 
     def _process_inject_event(_aad):
-        os.open(_INJECT_PIPE, os.O_SYNC | os.O_CREAT | os.O_RDONLY | os.O_NONBLOCK)
+        read_event_pipe = os.open(_INJECT_PIPE, os.O_SYNC | os.O_CREAT | os.O_RDONLY | os.O_NONBLOCK)
         while not _aad.isStop:
             try:
                 read_bytes = os.read(read_event_pipe, AndroidEventInject.EVENT_SIZE)
