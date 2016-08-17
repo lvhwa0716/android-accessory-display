@@ -149,6 +149,7 @@ public class ScreenMirrorService extends Service {
 		if (mAccessory.equals(accessory)) {
 			release();
 		}
+		android.os.Process.killProcess(android.os.Process.myPid());
 
 	}
 
