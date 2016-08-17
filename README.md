@@ -23,12 +23,13 @@
 # 5. run
 	enable USB debug on phone, connect phone to PC with usb cable .
 	First must check adb connect is OK (eg use command: adb shell ls)
-    a. aosp/frameworks/base/tests/AccessoryDisplay on phone
+
+    a. aosp/frameworks/base/tests/AccessoryDisplay on phone(or install ScreenMirror to phone)
         when use this , screen size must less 320x240,
         or modify com.android.accessorydisplay.common.Protocol.MAX_ENVELOPE_SIZE more larger
-    b. run this file
-    c. run ffplay /tmp/android_accessory_display.pipe on ubuntu.
-       ffplay -f h264 -vcodec h264 -sn -an /tmp/android_accessory_display.pipe
+
+    b. run ffplay on ubuntu.
+       ./ffplay -f h264 -vcodec h264 -sn -an /tmp/android_accessory_display.pipe
 	   prebuilt ffplay support video sync , it show slow then phone.
 	   getcode : https://github.com/FFmpeg/FFmpeg
 	   fixed it(not use video sync) : get ffmpeg source 
@@ -40,5 +41,7 @@
             
             }
             is->frame_timer += delay;
+
+    c. run this file
 
 
