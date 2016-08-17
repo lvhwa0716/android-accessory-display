@@ -292,8 +292,9 @@ class AndroidAccessoryDisplay:
             return service, what, _bytes
 
         except usb.core.USBError as e:
-            self._log("_read Error :" , e)
+            #self._log("_read Error :" , e)
             raise e
+            pass
 
     def _close(self):
         if self._isProcessing:
@@ -887,7 +888,7 @@ if __name__ == '__main__':
         # _log(e)
         pass
     write_pipe = os.open(_VIDEO_PIPE, os.O_SYNC | os.O_CREAT | os.O_RDWR | os.O_NONBLOCK)
-    read_event_pipe = os.open(_INJECT_PIPE, os.O_SYNC | os.O_CREAT | os.O_RDONLY | os.O_NONBLOCK)
+    read_event_pipe = None
 
 
     def signal_handler(signal, frame):
@@ -900,6 +901,7 @@ if __name__ == '__main__':
 
 
     def _process_inject_event(_aad):
+        os.open(_INJECT_PIPE, os.O_SYNC | os.O_CREAT | os.O_RDONLY | os.O_NONBLOCK)
         while not _aad.isStop:
             try:
                 read_bytes = os.read(read_event_pipe, AndroidEventInject.EVENT_SIZE)
@@ -942,6 +944,7 @@ if __name__ == '__main__':
                             _bytes = _bytes[_write_size:]
                         except Exception as e:
                             _log("write to fifo error :", len(_bytes),e)
+                            pass
 
                     # read event from ffmpeg
                     if _threadProcess_inject_event is None:
