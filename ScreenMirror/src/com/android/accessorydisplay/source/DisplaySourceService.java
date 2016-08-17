@@ -211,6 +211,39 @@ public class DisplaySourceService extends Service {
         }
     }
 
+	private final class VirtualDisplayCallback extends VirtualDisplay.Callback {
+		/**
+         * Called when the virtual display video projection has been
+         * paused by the system or when the surface has been detached
+         * by the application by calling setSurface(null).
+         * The surface will not receive any more buffers while paused.
+         */
+        @Override
+         public void onPaused() {
+            getLogger().log("VirtualDisplay Paused");
+         }
+
+        /**
+         * Called when the virtual display video projection has been
+         * resumed after having been paused.
+         */
+        @Override
+         public void onResumed() {
+            getLogger().log("VirtualDisplay Resumed");
+         }
+
+        /**
+         * Called when the virtual display video projection has been
+         * stopped by the system.  It will no longer receive frames
+         * and it will never be resumed.  It is still the responsibility
+         * of the application to release() the virtual display.
+         */
+        @Override
+        public void onStopped() {
+            getLogger().log("VirtualDisplay Stopped");
+         }
+	}
+
     private final class VirtualDisplayThread extends Thread {
         private static final int TIMEOUT_USEC = 1000000;
 
@@ -249,7 +282,8 @@ public class DisplaySourceService extends Service {
             try {
 	            if(mMediaProjection != null) {
 	            	virtualDisplay = mMediaProjection.createVirtualDisplay(
-	                        DISPLAY_NAME, mWidth, mHeight, mDensityDpi, DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,surface,null,null);
+	                        DISPLAY_NAME, mWidth, mHeight, mDensityDpi, DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,surface,
+	                        new VirtualDisplayCallback(),DisplaySourceService.this.mHandler);
 	            } else {
 	            	virtualDisplay = mDisplayManager.createVirtualDisplay(
 	                    DISPLAY_NAME, mWidth, mHeight, mDensityDpi, surface, 0);
@@ -265,7 +299,12 @@ public class DisplaySourceService extends Service {
 
                 mHandler.obtainMessage(MSG_DISPATCH_DISPLAY_REMOVED,
                         virtualDisplay.getDisplay()).sendToTarget();
-                virtualDisplay.release();
+                try {
+                    virtualDisplay.release();
+                    mMediaProjection.stop();
+                } catch (Exception e){
+                    getLogger().log("virtualDisplay release Error ignore: " + e.toString());
+                }
             }
 
             codec.signalEndOfInputStream();
