@@ -3402,7 +3402,7 @@ static void event_loop(VideoState *cur_stream)
     for (;;) {
         double x;
         refresh_loop_wait_event(cur_stream, &event);
-		av_log(NULL, AV_LOG_WARNING, "event type : (%d)\n" , event.type);
+		//av_log(NULL, AV_LOG_WARNING, "event type : (%d)\n" , event.type);
         switch (event.type) {
     #if INJECT_EVENT2PIPE
         case SDL_KEYUP:
@@ -3600,7 +3600,7 @@ static void event_loop(VideoState *cur_stream)
 			break;
         case SDL_MOUSEMOTION: {
 				int down = 0;
-				av_log(NULL, AV_LOG_WARNING, "inject_event_fd %d.\n", cur_stream->inject_event_fd);
+				//av_log(NULL, AV_LOG_WARNING, "inject_event_fd %d.\n", cur_stream->inject_event_fd);
 				SDL_Rect rect = cur_stream->last_display_rect;
 				if( (rect.w == 0) || (rect.h == 0) ) {
 					av_log(NULL, AV_LOG_WARNING, "video_rect 0\n");
@@ -3626,12 +3626,12 @@ static void event_loop(VideoState *cur_stream)
 					ie.video_y = rect.y;
 					ie.video_w = rect.w;
 					ie.video_h = rect.h;
-					av_log(NULL, AV_LOG_WARNING, "inject_event_fd start write : %d.\n", sizeof(ie));
+					//av_log(NULL, AV_LOG_WARNING, "inject_event_fd start write : %d.\n", sizeof(ie));
 					int size = write(cur_stream->inject_event_fd,&ie,sizeof(ie));
-					av_log(NULL, AV_LOG_WARNING, "inject_event_fd end write : %d.\n", size);
+					//av_log(NULL, AV_LOG_WARNING, "inject_event_fd end write : %d.\n", size);
 				}
 			}
-			av_log(NULL, AV_LOG_WARNING, "SDL_MOUSEMOTION %d exit.\n", SDL_MOUSEMOTION);
+			//av_log(NULL, AV_LOG_WARNING, "SDL_MOUSEMOTION %d exit.\n", SDL_MOUSEMOTION);
 			break;
 	#else
         case SDL_MOUSEBUTTONDOWN:
