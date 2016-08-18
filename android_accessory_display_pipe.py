@@ -36,7 +36,9 @@
             is->frame_timer += delay;
     c. run this file
 
-    Note : default use multi-touch hid, if phone not support please set _support_touch = 2 , drag and double click will work
+    Note : default use multi-touch hid, if phone not support please set 
+		1). _support_touch = 2 , drag and double click will work
+		2). _support_touch = 3 , mouse pointer can work , better then 1)
 
 
 """
@@ -88,17 +90,19 @@ class AndroidAccessoryDisplay:
     _accessory_pid = 0x2d01
     _accessory_vid = 0x18d1
 
-    # _support_touch = 0 : not support, 1 : multi-touch , 2 : single-touch,
+    # _support_touch = 0 : not support, 1 : multi-touch , 2 : single-touch, 3: mouse
     _support_touch = 1
     # _support_touch =  0 : not support, 1 : 101 keyboard
     _support_keyboard = 1
-    _support_single_touch = 1
+
     ACCESSORY_REGISTER_HID = 54
     ACCESSORY_SET_HID_REPORT_DESC = 56
     ACCESSORY_SEND_HID_EVENT = 57
-    TOUCH_DEVICE_ID = 0
-    KEYBOARD_DEVICE_ID = 1
+
+    KEYBOARD_DEVICE_ID = 0
+    TOUCH_DEVICE_ID = 1
     SINGLE_TOUCH_DEVICE_ID = 2
+    MOUSE_ABS_DEVICE_ID = 3
 
     # when auto detect failed ,add vid, pid here
     _android_device_list = [
@@ -124,6 +128,8 @@ class AndroidAccessoryDisplay:
         self.phone_dpi = 240
         self._key_status = 0
         self._touch_status = 0
+        self._last_point_x = 0
+        self._last_point_y = 0
         device = self._autoDetectDevice()
         if device is None:
             raise usb.core.USBError('Device not connected')
@@ -196,6 +202,16 @@ class AndroidAccessoryDisplay:
                              wValue = self.SINGLE_TOUCH_DEVICE_ID,
                              wIndex = 0,
                              data_or_wLength = AndroidEventInject.SingleTouchReportDescriptor)
+        elif self._support_touch == 3:
+            self._device.ctrl_transfer(bmRequestType = 0x40,
+                             bRequest = self.ACCESSORY_REGISTER_HID,
+                             wValue = self.MOUSE_ABS_DEVICE_ID,
+                             wIndex = len(AndroidEventInject.MouseAbsReportDescriptor))
+            self._device.ctrl_transfer(bmRequestType = 0x40,
+                             bRequest = self.ACCESSORY_SET_HID_REPORT_DESC,
+                             wValue = self.MOUSE_ABS_DEVICE_ID,
+                             wIndex = 0,
+                             data_or_wLength = AndroidEventInject.MouseAbsReportDescriptor)
 
         if self._support_keyboard == 1:
             self._device.ctrl_transfer(bmRequestType = 0x40,
@@ -412,11 +428,11 @@ class AndroidAccessoryDisplay:
                          data_or_wLength = _bytes)
 
         elif ie.type == 2 :
-            if ie.status == 0 and self._touch_status == 0: # no need send
-                return
-            self._touch_status = ie.status
             if self._support_touch == 1:
-                _bytes = struct.pack("4B2H2B2HB",0x7F, 1, ie.status, 1, ie.x, ie.y, 0, 0, 0, 0, 1)
+                if ie.status == 0 and self._touch_status == 0: # no need send
+                    return
+                self._touch_status = ie.status
+                _bytes = struct.pack("4B2H2B2HB",0x7F, 1, ie.status, 1, ie.x & 0xFFFF, ie.y & 0xFFFF, 0, 0, 0, 0, 1)
                 _bytes = _bytes[1:] # need align
                 self._device.ctrl_transfer(bmRequestType = 0x40,
                              bRequest = self.ACCESSORY_SEND_HID_EVENT,
@@ -424,15 +440,38 @@ class AndroidAccessoryDisplay:
                              wIndex = 0,
                              data_or_wLength = _bytes)
             elif self._support_touch == 2:
+                if ie.status == 0 and self._touch_status == 0: # no need send
+                    return
+                self._touch_status = ie.status
                 _inrange = 0
                 if ie.status !=0:
                     _inrange = 0x08
-                _bytes = struct.pack("4B2H", 0x7F, 1, ie.status, 0, ie.x, ie.y)
+                _bytes = struct.pack("4B2H", 0x7F, 1, ie.status, 0, ie.x & 0xFFFF, ie.y & 0xFFFF)
                 _bytes = _bytes[1:] # need align
 
                 self._device.ctrl_transfer(bmRequestType = 0x40,
                              bRequest = self.ACCESSORY_SEND_HID_EVENT,
                              wValue = self.SINGLE_TOUCH_DEVICE_ID,
+                             wIndex = 0,
+                             data_or_wLength = _bytes)
+            elif self._support_touch == 3:
+                self._touch_status = ie.status
+                _x = ie.x - self._last_point_x
+                _y = ie.y - self._last_point_y
+                _x = _x / 32
+                _y = _y / 32
+                self._last_point_x = ie.x
+                self._last_point_y = ie.y
+                _bytes = struct.pack("2B2HB", 0x7F, ie.status, _x & 0xFFFF, _y & 0xFFFF,0)
+                _bytes = _bytes[1:] # need align
+                for i in xrange(0,len(_bytes)):
+                    print( "0x%02x"%ord(_bytes[i])),
+                print( "")
+                self._last_point_x = ie.x
+                self._last_point_y = ie.y
+                self._device.ctrl_transfer(bmRequestType = 0x40,
+                             bRequest = self.ACCESSORY_SEND_HID_EVENT,
+                             wValue = self.MOUSE_ABS_DEVICE_ID,
                              wIndex = 0,
                              data_or_wLength = _bytes)
 
@@ -815,7 +854,40 @@ class AndroidEventInject:
         0xc0,                           ##//     END_COLLECTION
         0xc0                           ##//     END_COLLECTION
     ])
-
+    MouseAbsReportDescriptor = bytearray([
+        0x05, 0x01,                    ##// USAGE_PAGE (Generic Desktop)
+        0x09, 0x02,                    ##// USAGE (Mouse)
+        0xa1, 0x01,                    ##// COLLECTION (Application)
+        0x05, 0x09,                    ##//   USAGE_PAGE (Button)
+        0x19, 0x01,                    ##//   USAGE_MINIMUM (Button 1)
+        0x29, 0x03,                    ##//   USAGE_MAXIMUM (Button 3)
+        0x15, 0x00,                    ##//   LOGICAL_MINIMUM (0)
+        0x25, 0x01,                    ##//   LOGICAL_MAXIMUM (1)
+        0x95, 0x03,                    ##//   REPORT_COUNT (3)
+        0x75, 0x01,                    ##//   REPORT_SIZE (1)
+        0x81, 0x02,                    ##//   INPUT (Data,Var,Abs)
+        0x95, 0x01,                    ##//   REPORT_COUNT (1)
+        0x75, 0x05,                    ##//   REPORT_SIZE (5)
+        0x81, 0x03,                    ##//   INPUT (Cnst,Var,Abs)
+        0x05, 0x01,                    ##//   USAGE_PAGE (Generic Desktop)
+        0x09, 0x01,                    ##//   USAGE (Pointer)
+        0xa1, 0x00,                    ##//   COLLECTION (Physical)
+        0x09, 0x30,                    ##//     USAGE (X)
+        0x09, 0x31,                    ##//     USAGE (Y)
+        0x16, 0x01, 0x80,              ##//     LOGICAL_MINIMUM (-32767)
+        0x26, 0xff, 0x7f,              ##//     LOGICAL_MAXIMUM (32767)
+        0x75, 0x10,                    ##//     REPORT_SIZE (16)
+        0x95, 0x02,                    ##//     REPORT_COUNT (2)
+        0x81, 0x06,                    ##//     INPUT (Data,Var,Rel)
+        0xc0,                          ##//     END_COLLECTION
+        0x09, 0x38,                    ##//   USAGE (Wheel)
+        0x15, 0x81,                    ##//   LOGICAL_MINIMUM (-127)
+        0x25, 0x7f,                    ##//   LOGICAL_MAXIMUM (127)
+        0x75, 0x08,                    ##//   REPORT_SIZE (8)
+        0x95, 0x01,                    ##//   REPORT_COUNT (1)
+        0x81, 0x06,                    ##//   INPUT (Data,Var,Rel)
+        0xc0                           ##// END_COLLECTION
+    ])
     def __init__(self, rawbytes):
         """
         :param rawbytes:
@@ -853,7 +925,7 @@ class AndroidEventInject:
                 _v_h = _data[10]
                 self.x = (int)(1.0 * (self.x - _v_x) * 32768 / _v_w)
                 self.y = (int)(1.0 * (self.y - _v_y) * 32768 / _v_h)
-                if self.x < 0 or self.y < 0 or self.x > 32768 or self.y > 32768:
+                if self.x < 0 or self.y < 0 or self.x >= 32768 or self.y >= 32768:
                     self.type = 0
                 #print("Event Touch : ",self.type, self.status, self.code, self.x,self.y )
             except Exception as e:

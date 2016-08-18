@@ -3,7 +3,10 @@
     a. Mirror Android Device Screen to PC Monitor 
     b. Enter words by PC Keyboard
     c. PC Mouse actor as multi-touch
-    Note :default use multi-touch hid, if phone not support please set _support_touch = 2 , drag and double click will work
+    Note :default use multi-touch hid, if phone not support please set 
+		1). _support_touch = 2 , drag and double click will work
+		2). _support_touch = 3 , mouse pointer can work , better then 1)
+		
 # Host Required
     python 2.7 & ubuntu 14.04LTS
 # 1. install libusb
