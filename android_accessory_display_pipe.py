@@ -64,8 +64,8 @@ class AndroidAccessoryDisplay:
     _MAX_CONTENT_SIZE = 8 * 64 * 1024  # com.android.accessorydisplay.common.Protocol.MAX_ENVELOPE_SIZE
     _HEADER_SIZE = 8
 
-    _ERR_ID = -1
-    _ERR_TIMEOUT = 1
+    _INTERNAL_ID = 0
+    _INTERNAL_CMD_TRYAGAIN = 1
 
     # send to Sink
     _ID = 1
@@ -130,6 +130,7 @@ class AndroidAccessoryDisplay:
         self._touch_status = 0
         self._last_point_x = 0
         self._last_point_y = 0
+        self._remain_data = array.array(self._B, [])
         device = self._autoDetectDevice()
         if device is None:
             raise usb.core.USBError('Device not connected')
@@ -299,13 +300,19 @@ class AndroidAccessoryDisplay:
         '''
         assert (self._device and self._endpoint_in)
         try:
-            read_bytes = self._endpoint_in.read(self._MAX_CONTENT_SIZE, timeout=_timeout)
-            service, what, size = struct.unpack("!2HI", read_bytes[:8])
-            _bytes = None
-            if size > 0:
-                # read_bytes = self._endpoint_in.read(size, timeout=_timeout)
-                _bytes = read_bytes[8:]
-            return service, what, _bytes
+            if len(self._remain_data) >= self._HEADER_SIZE:
+                service, what, size = struct.unpack("!2HI", self._remain_data[:self._HEADER_SIZE])
+                if size == 0:
+                    self._remain_data = self._remain_data[self._HEADER_SIZE:]
+                    return service, what, None
+                elif size <= len(self._remain_data) - self._HEADER_SIZE:
+                    _bytes = self._remain_data[self._HEADER_SIZE : self._HEADER_SIZE + size]
+                    self._remain_data = self._remain_data[self._HEADER_SIZE + size:]
+                    return service, what, _bytes
+
+            _buffer_bytes = self._endpoint_in.read(self._MAX_CONTENT_SIZE, timeout=_timeout)
+            self._remain_data = self._remain_data + _buffer_bytes
+            return self._INTERNAL_ID, self._INTERNAL_CMD_TRYAGAIN, None
 
         except usb.core.USBError as e:
             #self._log("_read Error :" , e)
@@ -458,15 +465,15 @@ class AndroidAccessoryDisplay:
                 self._touch_status = ie.status
                 _x = ie.x - self._last_point_x
                 _y = ie.y - self._last_point_y
-                _x = _x / 32
-                _y = _y / 32
+                _x = _x / 16
+                _y = _y / 16
                 self._last_point_x = ie.x
                 self._last_point_y = ie.y
                 _bytes = struct.pack("2B2HB", 0x7F, ie.status, _x & 0xFFFF, _y & 0xFFFF,0)
                 _bytes = _bytes[1:] # need align
-                for i in xrange(0,len(_bytes)):
-                    print( "0x%02x"%ord(_bytes[i])),
-                print( "")
+                #for i in xrange(0,len(_bytes)):
+                #    print( "0x%02x"%ord(_bytes[i])),
+                #print( "")
                 self._last_point_x = ie.x
                 self._last_point_y = ie.y
                 self._device.ctrl_transfer(bmRequestType = 0x40,
@@ -488,26 +495,30 @@ class AndroidAccessoryDisplay:
             try:
                 id, cmd, _bytes = self._read()
                 #self._log('Read in value:', id, cmd)
-                if id != self._ID:
-                    self._log("_ID Error")
-                    continue
-                if cmd == self._MSG_QUERY:
-                    _bytes = struct.pack("!3I", width, height, dpi)
-                    self._write(self._SOURCE_ID, self._MSG_SINK_AVAILABLE, _bytes)
-                if cmd == self._MSG_QUERY_EXT:
-                    phone_width, phone_height, phone_dpi = struct.unpack("!3I", _bytes)
-                    _bytes = struct.pack("!3I", width, height, dpi)
-                    self._write(self._SOURCE_ID, self._MSG_SINK_AVAILABLE, _bytes)
-                elif cmd == self._MSG_CONTENT:
-                    #self._log("Content Size : ", len(_bytes))
-                    self.putMediaData(_bytes)
+                if id == self._INTERNAL_ID:
+                    pass
+                elif id == self._ID:
+                    if cmd == self._MSG_QUERY:
+                        _bytes = struct.pack("!3I", width, height, dpi)
+                        self._write(self._SOURCE_ID, self._MSG_SINK_AVAILABLE, _bytes)
+                    elif cmd == self._MSG_QUERY_EXT:
+                        phone_width, phone_height, phone_dpi = struct.unpack("!3I", _bytes)
+                        _bytes = struct.pack("!3I", width, height, dpi)
+                        self._write(self._SOURCE_ID, self._MSG_SINK_AVAILABLE, _bytes)
+                    elif cmd == self._MSG_CONTENT:
+                        #self._log("Content Size : ", len(_bytes))
+                        self.putMediaData(_bytes)
+                    else:
+                        self._log("not Support:", id, cmd)
                 else:
-                    self._log("not Support")
+                    self._log("_ID Error")
+                    pass
             except usb.core.USBError as e:
                 if e.errno == 110:  # Operation timed out.
                     # self._log("Read Timeout")
                     pass
                 else:
+                    self._log(e)
                     self._isProcessing = False
 
     @property
