@@ -44,6 +44,7 @@ public class ScreenMirrorService extends Service {
 	private static final String MANUFACTURER = "Android";
 	private static final String MODEL = "Accessory Display";
 
+	private int iProcessStatus = 0;
 	private MediaProjection.Callback mMediaProjectionCallback = new MediaProjection.Callback() {
 		@Override
 		public void onStop() {
@@ -84,7 +85,8 @@ public class ScreenMirrorService extends Service {
 		}
 	}
 
-	public void accessoryAttached(UsbAccessory accessory) {
+	private void accessoryAttached(UsbAccessory accessory) {
+
 		if (accessory == null)
 			return;
 		mLogger.log("Attached:" + accessory.toString());
@@ -98,13 +100,13 @@ public class ScreenMirrorService extends Service {
 		}
 		if (isSink(accessory)) {
 			release();
-
 			if (!mUsbManager.hasPermission(accessory)) {
 				mLogger.log("Prompting the user for access to the accessory.");
 				Intent intent = new Intent(ScreenMirrorReceiver.ACTION_USB_ACCESSORY_PERMISSION);
 				intent.setPackage(getPackageName());
 				PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
 				mUsbManager.requestPermission(accessory, pendingIntent);
+				iProcessStatus = 1;
 				return;
 			}
 			if (mMediaProjection == null) {
@@ -114,6 +116,7 @@ public class ScreenMirrorService extends Service {
 				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				intent.putExtra(Intent.EXTRA_INTENT, mMediaProjectionManager.createScreenCaptureIntent());
 				getApplication().startActivity(intent);
+				iProcessStatus = 2;
 				return;
 			}
 			// Open the accessory.
@@ -122,13 +125,14 @@ public class ScreenMirrorService extends Service {
 				fd = mUsbManager.openAccessory(accessory);
 				if (fd == null) {
 					mLogger.logError("Could not obtain accessory connection.");
+					terminal();
 					return;
 				}
 			} catch (Exception e) {
 				mLogger.log(e.toString());
 				return;
 			}
-
+			iProcessStatus = 3;
 			// All set.
 			mLogger.log("Connected.");
 			mConnected = true;
@@ -140,16 +144,20 @@ public class ScreenMirrorService extends Service {
 			mTransport.startReading();
 		}
 	}
-
-	public void accessoryDetached(UsbAccessory accessory) {
+	private void terminal() {
+		mLogger.logError("Error , terminal");
+		android.os.Process.killProcess(android.os.Process.myPid());
+	}
+	private void accessoryDetached(UsbAccessory accessory) {
 		mLogger.log("Detached:" + accessory.toString());
+		iProcessStatus = 0;
 		if (mConnected == false)
 			return;
 
 		if (mAccessory.equals(accessory)) {
 			release();
 		}
-		android.os.Process.killProcess(android.os.Process.myPid());
+		terminal();
 
 	}
 
@@ -173,6 +181,10 @@ public class ScreenMirrorService extends Service {
 				mHandler.post(new Runnable() {
 					@Override
 					public void run() {
+						if(iProcessStatus != 0) {
+							mLogger.log("accessoryAttached already in processing, igore, Status = " + iProcessStatus);
+							return;
+						}
 						accessoryAttached(accessory);
 					}
 				});
@@ -182,6 +194,7 @@ public class ScreenMirrorService extends Service {
 				mHandler.post(new Runnable() {
 					@Override
 					public void run() {
+						iProcessStatus = 0;
 						accessoryDetached(accessory);
 					}
 				});

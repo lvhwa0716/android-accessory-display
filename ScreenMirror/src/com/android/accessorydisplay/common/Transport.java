@@ -315,6 +315,7 @@ public abstract class Transport {
                     }
                 } catch (IOException ex) {
                     mLogger.logError("Read failed: " + ex);
+                    mEventNotify.eventIOError(3);
                     break; // error
                 }
                 position += count;
