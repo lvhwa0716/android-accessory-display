@@ -63,7 +63,8 @@ public class DisplaySourceService extends Service {
     private int mSinkDensityDpi;
 
     private VirtualDisplayThread mVirtualDisplayThread;
-
+	private Object mThreadNotify = new Object();
+	private boolean mThreadTerminal = true;
     public DisplaySourceService(Context context, Transport transport, Callbacks callbacks) {
         super(context, transport, Protocol.DisplaySourceService.ID);
         mCallbacks = callbacks;
@@ -177,12 +178,25 @@ public class DisplaySourceService extends Service {
 
         mVirtualDisplayThread = new VirtualDisplayThread(
                 mSinkWidth, mSinkHeight, mSinkDensityDpi);
+		synchronized (mThreadNotify) {
+			mThreadTerminal = false;
+		}
         mVirtualDisplayThread.start();
     }
 
     private void releaseVirtualDisplay() {
         if (mVirtualDisplayThread != null) {
             mVirtualDisplayThread.quit();
+			// wait thread complete
+			synchronized (mThreadNotify) {
+				if( mThreadTerminal == false)
+					try {
+						mThreadNotify.wait();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+			}
             mVirtualDisplayThread = null;
         }
     }
@@ -288,6 +302,7 @@ public class DisplaySourceService extends Service {
 	            	virtualDisplay = mDisplayManager.createVirtualDisplay(
 	                    DISPLAY_NAME, mWidth, mHeight, mDensityDpi, surface, 0);
 	            }
+				getLogger().log("virtualDisplay create ");
             } catch (Exception e){
             	getLogger().log("Create VirtualDisplay Error : " + e.toString());
             }
@@ -301,6 +316,7 @@ public class DisplaySourceService extends Service {
                         virtualDisplay.getDisplay()).sendToTarget();
                 try {
                     virtualDisplay.release();
+					getLogger().log("virtualDisplay release ");
                     mMediaProjection.stop();
                 } catch (Exception e){
                     getLogger().log("virtualDisplay release Error ignore: " + e.toString());
@@ -309,6 +325,10 @@ public class DisplaySourceService extends Service {
 
             codec.signalEndOfInputStream();
             codec.stop();
+			synchronized (mThreadNotify) {
+				mThreadTerminal = true;
+				mThreadNotify.notifyAll();
+			}
         }
 
         public void quit() {
