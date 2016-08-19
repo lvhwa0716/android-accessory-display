@@ -4017,6 +4017,7 @@ int main(int argc, char **argv)
 		char ie_name[256];
 		sprintf(ie_name,"%s_ev",input_filename);
 		av_log(NULL, AV_LOG_WARNING, "open : %s.\n", ie_name);
+		mkfifo((const char *)ie_name, S_IRGRP | S_IWGRP | S_IWUSR | S_IRUSR); 
 		_event_fd = open(ie_name, O_WRONLY);
 		av_log(NULL, AV_LOG_WARNING, "inject_event_fd start write : %d.\n", _event_fd);
 	}
