@@ -156,8 +156,9 @@ public class ScreenMirrorService extends Service {
 
 		if (mAccessory.equals(accessory)) {
 			release();
+			terminal();
 		}
-		terminal();
+		
 
 	}
 
