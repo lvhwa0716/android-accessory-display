@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="main_info">演示</string>
+    <string name="app_name">拼屏</string>
+    <string name="action_start">开始</string>
+    <string name="action_stop">停止</string>
+    <string name="screenmode">模式选择</string>
+    <string name="mirror">镜像</string>
+    <string name="extend">扩展</string>
+    <string name="h264_resolution">分辨率</string>
+    
+    <string name="info_connecting">连接中&#8230;</string>
+    <string name="info_connected">已连接</string>
+    <string name="info_rendering">正在显示输出，拔掉设备，自动关闭</string>
+    <string name="info_tryagain">失败，重新插拔一次设备 </string>
+    <string name="info_unknown_error">未知错误</string>
+</resources>

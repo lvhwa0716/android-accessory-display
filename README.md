@@ -47,4 +47,4 @@
 
     c. run this file
 
-
+# 6. ffmpeg-3.2.4 , use C instead of python

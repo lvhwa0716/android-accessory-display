@@ -1,0 +1,69 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/infoTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/info_connecting" />
+
+    <RadioGroup
+        android:id="@+id/styleRadioGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/screenmode" >
+
+        <RadioButton
+            android:id="@+id/styleRadio_mirror"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/mirror" >
+        </RadioButton>
+
+        <RadioButton
+            android:id="@+id/styleRadio_extend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/extend" >
+        </RadioButton>
+    </RadioGroup>
+
+    <RadioGroup
+        android:id="@+id/h264RadioGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/h264_resolution" >
+
+        <RadioButton
+            android:id="@+id/h264Radio_480p"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/h264_480p" >
+        </RadioButton>
+
+        <RadioButton
+            android:id="@+id/h264Radio_720p"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/h264_720p" >
+        </RadioButton>
+
+        <RadioButton
+            android:id="@+id/h264Radio_1080p"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/h264_1080p" >
+        </RadioButton>
+    </RadioGroup>
+
+    <Button
+        android:id="@+id/actionButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/action_start" />
+
+</LinearLayout>

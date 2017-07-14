@@ -1,0 +1,23 @@
+=encoding utf8
+
+=head1 NAME
+
+USBHumanInterfaceHost - Android Accessory Device 
+
+=head1 DESCRIPTION
+
+
+
+
+
+=head1 SEE ALSO
+
+
+
+
+
+
+=head1 AUTHORS
+
+
+lvhwa0716@gmail.com

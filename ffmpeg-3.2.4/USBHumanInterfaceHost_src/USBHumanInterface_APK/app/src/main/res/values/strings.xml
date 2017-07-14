@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">USBHumanInterface</string>
+    <string name="main_info">Demo</string>
+    <string name="presentationactivity">PresentationActivity(aosp apidemos)</string>
+    
+    <string name="action_start">Start</string>
+    <string name="action_stop">Stop</string>
+    <string name="screenmode">Mode</string>
+    <string name="mirror">Mirror</string>
+    <string name="extend">Extend</string>
+    <string name="h264_resolution">Resolution</string>
+    <string name="h264_480p">480p</string>
+    <string name="h264_720p">720p</string>
+    <string name="h264_1080p">1080p</string>
+    
+    <string name="info_connecting">Connecting&#8230;</string>
+    <string name="info_connected">Connected</string>
+    <string name="info_rendering">Rendering, Will stop when disconnect device</string>
+    <string name="info_tryagain">Failed , try to replug cable </string>
+    <string name="info_unknown_error">Unknown Error</string>
+
+    <string name="activity_presentation">App/Activity/Presentation</string>
+    <string name="presentation_activity_text">This activity demonstrates how to use a
+                  Presentation and the DisplayManager to show content on other Displays.\n
+                  Try connecting a secondary display and watch what happens.\n
+                  Selecting a Display will open a Presentation on it.</string>
+    <string name="presentation_show_all_displays">Show all displays</string>
+    <string name="presentation_photo_text">Showing photo #%1$d on display #%2$d: %3$s.</string>
+    <string name="presentation_info_text">Info</string>
+    <string name="presentation_display_id_text">Display #%1$d: %2$s</string>
+    <string name="presentation_alert_info_text">Display #%1$d Info</string>
+    <string name="presentation_alert_dismiss_text">OK</string>
+
+</resources>

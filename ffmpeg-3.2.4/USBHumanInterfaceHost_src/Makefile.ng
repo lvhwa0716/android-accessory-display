@@ -1,0 +1,35 @@
+
+AVPROGS-yes += USBHumanInterfaceHost
+
+CFLAGS-USBHumanInterfaceHost=-D_REENTRANT -I/usr/include/SDL2
+LIBS-USBHumanInterfaceHost=-lusb-1.0 -lSDL2
+
+OBJS-USBHumanInterfaceHost := USBHumanInterfaceHost_src/USBAndroidDevice.o \
+		USBHumanInterfaceHost_src/USBAndroidHID.o \
+		USBHumanInterfaceHost_src/USBAndroidHotplug.o \
+		USBHumanInterfaceHost_src/USBAndroidKeymap.o \
+		USBHumanInterfaceHost_src/USBAndroidMain.o \
+		USBHumanInterfaceHost_src/USBAndroidMediaPlay.o \
+		USBHumanInterfaceHost_src/USBAndroidScreen.o \
+		USBHumanInterfaceHost_src/USBAndroidMain_ffplay.o \
+		USBHumanInterfaceHost_src/USBAndroidLog.o \
+		USBHumanInterfaceHost_src/MessageNotify.o \
+		
+AVBASENAMES  +=USBHumanInterfaceHost
+
+##lvhwa@ add to parent Makefile (remove #)
+##AVPROGS-$(CONFIG_FFSERVER) += ffserver
+#include USBHumanInterfaceHost/Makefile.ng
+##AVPROGS    := $(AVPROGS-yes:%=%$(PROGSSUF)$(EXESUF))
+##@@
+
+#AVPROGS    := $(AVPROGS-yes:%=%$(PROGSSUF)$(EXESUF))
+#INSTPROGS   = $(AVPROGS-yes:%=%$(PROGSSUF)$(EXESUF))
+#PROGS      += $(AVPROGS)
+
+#AVBASENAMES  = ffmpeg ffplay ffprobe ffserver
+##lvhwa@ add to parent Makefile (remove #)
+##AVBASENAMES  = ffmpeg ffplay ffprobe ffserver
+AVBASENAMES  +=USBHumanInterfaceHost
+##ALLAVPROGS   = $(AVBASENAMES:%=%$(PROGSSUF)$(EXESUF))
+##@@
