@@ -11,6 +11,12 @@
 4. Ubuntu OK , Windows can't work because of libusb , need winusb
 
 5. Some device not support hid , pls use "adb shell input" inject tap and keyevent
+	get Screen DIM
+	$ adb shell dumpsys window displays
+		WINDOW MANAGER DISPLAY CONTENTS (dumpsys window displays)
+  			Display: mDisplayId=0
+    			init=1080x1920 480dpi cur=1080x1920 app=1080x1920 rng=1080x1020-1920x1860
+    			deferred=false layoutNeeded=false
 
 6. permission
 	modified:   base/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java
