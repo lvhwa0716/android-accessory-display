@@ -72,10 +72,20 @@ public class UsbAttatchActivity extends Activity implements View.OnClickListener
 
 		// Style
 		RadioGroup group = (RadioGroup) this.findViewById(R.id.styleRadioGroup);
+		if(mStyle == STYLE_MIRROR)
+			group.check(R.id.styleRadio_mirror);
+		else
+			group.check(R.id.styleRadio_extend);
 		group.setOnCheckedChangeListener(mRadioGroupCheckedListener);
 
 		// Resolution
 		group = (RadioGroup) this.findViewById(R.id.h264RadioGroup);
+		if(mEncodec.equals(Protocol.H264Profile.get(0)))
+			group.check(R.id.h264Radio_480p);
+		else if(mEncodec.equals(Protocol.H264Profile.get(1)))
+			group.check(R.id.h264Radio_720p);
+		else
+			group.check(R.id.h264Radio_1080p);
 		group.setOnCheckedChangeListener(mRadioGroupCheckedListener);
 
 		Logger.logDebug(TAG, "onCreate: " + getIntent());
