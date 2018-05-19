@@ -11,6 +11,10 @@
 4. Ubuntu OK , Windows can't work because of libusb , need winusb
 
 5. Some device not support hid , pls use "adb shell input" inject tap and keyevent
+	adb shell input tap x y
+	adb shell input keyevent code
+	adb shell input roll dx dy
+	
 	get Screen DIM
 	$adb shell wm size
 		Physical size: 1080x1920
