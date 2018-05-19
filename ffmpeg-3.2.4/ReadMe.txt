@@ -12,6 +12,9 @@
 
 5. Some device not support hid , pls use "adb shell input" inject tap and keyevent
 	get Screen DIM
+	$adb shell wm size
+		Physical size: 1080x1920
+	OR 
 	$ adb shell dumpsys window displays
 		WINDOW MANAGER DISPLAY CONTENTS (dumpsys window displays)
   			Display: mDisplayId=0
