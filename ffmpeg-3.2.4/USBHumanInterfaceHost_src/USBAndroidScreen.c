@@ -36,8 +36,8 @@
 #define	MSG_SINK_AVAILABLE 1
 #define	MSG_SINK_NOT_AVAILABLE 2
 
-int screen_width = 0;
-int screen_height = 0;
+static int screen_width = 0;
+static int screen_height = 0;
 
 static int getHead(unsigned char *pBuf, int BufSize, int *size, int *what) {
 	if (BufSize >= HEAD_SIZE) {
@@ -104,7 +104,7 @@ static int dispatchReceived(int id,	int what, unsigned char * p, int size) {
 				screen_width = 0;
 				screen_height = 0;
 			}
-			_usbandroid_logdbg("screen_width : %d, screen_height : %d\n", screen_width,
+			_usbandroid_loginfo("screen_width : %d, screen_height : %d\n", screen_width,
 					screen_height);
 
 			uint16_t *p16 = (uint16_t*) &send.u8[0];
@@ -198,4 +198,11 @@ void *USBAndroidScreen_thread_main(void *arg) {
 
 	}
 	return NULL;
+}
+
+int USBAndroidScreen_getWidth() {
+	return screen_width;
+}
+int USBAndroidScreen_getHeight() {
+	return screen_height;
 }

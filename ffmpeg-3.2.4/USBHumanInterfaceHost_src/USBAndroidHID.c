@@ -25,8 +25,8 @@
 
 static int keyboard_exist = 0;
 static int mouse_exist = 0;
-static int screen_width = 0;
-static int screen_height = 0;
+#define screen_width USBAndroidScreen_getWidth()
+#define screen_height  USBAndroidScreen_getHeight()
 
 static int USBAndroidHID_registerKeyboard(libusb_device_handle* handle) {
 	int mHidLength = sizeof(KeyBoardReportDescriptor);
@@ -98,10 +98,12 @@ static int USBAndroidHID_registerMultiTouch(libusb_device_handle* handle) {
 static void LIBUSB_CALL cb_dummy(struct libusb_transfer *transfer) {
 	if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
 		_usbandroid_logerr( "mode change transfer not completed!\n");
+	} else {
+		#if 0
+			_usbandroid_loginfo("async report HID length=%d actual_length=%d\n", transfer->length,
+				transfer->actual_length);
+		#endif
 	}
-
-	_usbandroid_loginfo("async report HID length=%d actual_length=%d\n", transfer->length,
-			transfer->actual_length);
 }
 static void USBAndroidHID_reportMouse(libusb_device_handle* handle,
 		struct _hid_data *_hid) {
@@ -274,12 +276,11 @@ static void USBAndroidHID_reportKey(libusb_device_handle* handle,
 
 }
 
-void USBAndroidHID_registerHID(libusb_device_handle* handle, int w, int h) {
+void USBAndroidHID_registerHID(libusb_device_handle* handle) {
 	keyboard_exist = 0;
 	mouse_exist = 0;
 	key_status = 0;
-	screen_width = w;
-	screen_height = h;
+
 #ifdef SUPPORT_HID
 	USBAndroidHID_registerKeyboard(handle);
 	USBAndroidHID_registerMouse(handle);
@@ -298,6 +299,19 @@ void USBAndroidHID_reportHIDEvent(libusb_device_handle* handle,
 
 		break;
 	case 2: // mouse relation event
+		{
+			float aspect_ratio = (float)screen_height / _hid->video_h;
+
+			int x = (int) (1.0 * (_hid->x - ((float)_hid->video_w - screen_width / aspect_ratio) / 2 ) * aspect_ratio);
+			int y = (int) (1.0 * (_hid->y - _hid->video_y) * aspect_ratio);
+			//_usbandroid_loginfo("reportTouch (%d,%d,%d,%d,%d,%d,)\n",_hid->x, _hid->video_x, _hid->video_w ,_hid->y, _hid->video_y, _hid->video_h );
+			//_usbandroid_loginfo("reportTouch Screen (%d,%d)\n", screen_width, screen_height);
+			_usbandroid_loginfo("reportTouch (%d,%d)\n", x, y);
+			if (x < 0 || y < 0 || x >= screen_width || y >= screen_height) {
+				return;
+			}
+			
+		}
 		if (mouse_exist != 0) {
 			USBAndroidHID_reportMouse(handle, _hid);
 		}

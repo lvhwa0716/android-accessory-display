@@ -393,8 +393,7 @@ static struct libusb_transfer *transfer_video_IN = NULL;
 static struct libusb_transfer *transfer_video_OUT = NULL;
 static int dipatch_status = 0;
 static libusb_device_handle *current_handle = NULL;
-extern int screen_width;
-extern int screen_height;
+
 
 void *USBAndroidDevice_getPool(void) {
 	return malloc(BULK_SIZE);
@@ -577,7 +576,7 @@ void *USBAndroidDevice_thread_main(void *arg) {
 		// set notify context
 		MessageNotify_setContext(handle);
 		// register HID
-		USBAndroidHID_registerHID(handle, screen_width, screen_height);
+		USBAndroidHID_registerHID(handle);
 		// loop 
 		unsigned char *pBuf = USBAndroidDevice_getPool();
 		if(pBuf == NULL) {

@@ -96,13 +96,15 @@ int MessageNotify_getData(unsigned char **p, int *size);
 
 int USBAndroidKeymap_getKeyMap(int key);
 
-void USBAndroidHID_registerHID(libusb_device_handle* handle, int w, int h);
+void USBAndroidHID_registerHID(libusb_device_handle* handle);
 void USBAndroidHID_reportHIDEvent(libusb_device_handle* handle, struct _hid_data *_hid);
 
 void *USBAndroidHotplug_thread_main(void *arg);
 
 
 void *USBAndroidScreen_thread_main(void *arg);
+int USBAndroidScreen_getWidth();
+int USBAndroidScreen_getHeight();
 
 void *USBAndroidMediaPlay_thread_main(void *arg);
 

@@ -963,6 +963,7 @@ static void video_image_display(VideoState *is)
         if (rect.x != is->last_display_rect.x || rect.y != is->last_display_rect.y || rect.w != is->last_display_rect.w || rect.h != is->last_display_rect.h || is->force_refresh) {
             is->last_display_rect = rect;
         }
+
 #endif
         SDL_RenderCopy(renderer, vp->bmp, NULL, &rect);
         if (sp) {
@@ -3371,6 +3372,13 @@ static void event_loop(VideoState *cur_stream)
             break;
 
         case SDL_MOUSEMOTION: {
+			#if (SHOW_CURSOR == 1)
+				if (cursor_hidden) {
+		            SDL_ShowCursor(1);
+		            cursor_hidden = 0;
+		        }
+		        cursor_last_shown = av_gettime_relative();
+			#endif
         	SDL_Rect rect = cur_stream->last_display_rect;
 
 			if( (rect.w == 0) || (rect.h == 0) ) {
