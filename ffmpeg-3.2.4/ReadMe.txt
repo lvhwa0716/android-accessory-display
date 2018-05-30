@@ -70,7 +70,7 @@
 		static struct android_usb_function *supported_functions[] = {
 			... ... 
 			&accessory_function,
-			&hid_function, // lvh@tcl
+			&hid_function, // lvh@
 			&audio_source_function,
 			... ...
 			NULL
