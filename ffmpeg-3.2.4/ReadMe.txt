@@ -24,7 +24,57 @@
   			Display: mDisplayId=0
     			init=1080x1920 480dpi cur=1080x1920 app=1080x1920 rng=1080x1020-1920x1860
     			deferred=false layoutNeeded=false
+	OR (modify kernel)
+		f_accessory.c
+		static int acc_hid_raw_request(struct hid_device *hid, unsigned char reportnum,
+			      __u8 *buf, size_t len, unsigned char rtype,
+			      int reqtype)
+		{
+			return -EIO;
+		}
+		static struct hid_ll_driver acc_hid_ll_driver = {
+			.parse = acc_hid_parse,
+			.start = acc_hid_start,
+			.stop = acc_hid_stop,
+			.open = acc_hid_open,
+			.close = acc_hid_close,
+			.raw_request = acc_hid_raw_request, // lvh@
+		};
+		android.c
+		#include "f_hid.c"
+		static int hid_function_init(struct android_usb_function *f,
+				 struct usb_composite_dev *cdev)
+		{
+			return ghid_setup(cdev->gadget, 2);
+		}
 
+		static void hid_function_cleanup(struct android_usb_function *f)
+		{
+			ghid_cleanup();
+		}
+
+		static int hid_function_bind_config(struct android_usb_function *f,
+							struct usb_configuration *c)
+		{
+			return hidg_bind_config(c, NULL, 0);
+		}
+
+		static struct android_usb_function hid_function = {
+			.name		= "hid",
+			.init		= hid_function_init,
+			.cleanup	= hid_function_cleanup,
+			.bind_config	= hid_function_bind_config,
+		};
+
+
+		static struct android_usb_function *supported_functions[] = {
+			... ... 
+			&accessory_function,
+			&hid_function, // lvh@tcl
+			&audio_source_function,
+			... ...
+			NULL
+		};
 6. permission
 	modified:   base/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java
 	modified:   base/packages/SystemUI/src/com/android/systemui/media/MediaProjectionPermissionActivity.java
