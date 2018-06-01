@@ -3357,7 +3357,7 @@ static void event_loop(VideoState *cur_stream)
 					struct _hid_data _hid;
 						memset(&_hid,0, sizeof(_hid));
 						_hid.type = 2;
-						_hid.status = 0;
+						_hid.status = 1 << 16;
 						_hid.x = event.button.x;
 						_hid.y = event.button.y;
 						_hid.video_x = rect.x;

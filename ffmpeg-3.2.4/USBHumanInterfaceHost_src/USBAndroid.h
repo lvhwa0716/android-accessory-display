@@ -51,8 +51,22 @@ typedef struct {
 } usbandroid_handle;
 
 struct _hid_data {
-	int type; // 1 = key , 2 = mouse
-	int status; // 1 = down , 0 = up
+	unsigned int type; // 1 = key , 2 = mouse
+	/*
+		status :
+			key: 
+				bit0: 1 = down , 0 = up
+			mouse:
+				bit0: LEFT_BUTTON 1: press
+				bit1: RIGHT_BUTTON 1: press
+				bit2: MIDDLE_BUTTON 1: press
+
+				bit16: LEFT_BUTTON 1: release
+				bit17: RIGHT_BUTTON 1: release
+				bit18: MIDDLE_BUTTON 1: release
+	*/
+
+	unsigned int status;
 	int code;   // key sym
 	int16_t x;
 	int16_t y;
