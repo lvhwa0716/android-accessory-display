@@ -304,18 +304,19 @@ static void USBAndroidHID_reportSingleTouch(libusb_device_handle* handle,
 }
 
 extern int USBAndroidKeymap_getKeyMap(int key);
-static uint8_t key_status = 0;
+
 static void USBAndroidHID_reportKey(libusb_device_handle* handle,
 		struct _hid_data *_hid) {
 
 	const int key_length = 8;
+	uint8_t key_status = 0;
 	struct libusb_transfer *transfer;
 	int key = USBAndroidKeymap_getKeyMap(_hid->code);
 	if (key < 0)
 		return;
 
 	unsigned char *buf = (unsigned char*) malloc(
-	LIBUSB_CONTROL_SETUP_SIZE + key_length);
+		LIBUSB_CONTROL_SETUP_SIZE + key_length);
 	if (!buf)
 		return;
 
@@ -325,37 +326,38 @@ static void USBAndroidHID_reportKey(libusb_device_handle* handle,
 		return;
 	}
 	libusb_fill_control_setup(buf, 0x40, ACCESSORY_SEND_HID_EVENT,
-	KEYBOARD_DEVICE_ID, 0, key_length);
+		KEYBOARD_DEVICE_ID, 0, key_length);
 	memset(buf + LIBUSB_CONTROL_SETUP_SIZE, 0, key_length);
 	uint8_t _ctrl_mask = 0;
+/*
+typedef enum {
+	KMOD_NONE  = 0x0000,
+	KMOD_LSHIFT= 0x0001,
+	KMOD_RSHIFT= 0x0002,
+	KMOD_LCTRL = 0x0040,
+	KMOD_RCTRL = 0x0080,
+	KMOD_LALT  = 0x0100,
+	KMOD_RALT  = 0x0200,
+	KMOD_LMETA = 0x0400,
+	KMOD_RMETA = 0x0800,
+	KMOD_NUM   = 0x1000,
+	KMOD_CAPS  = 0x2000,
+	KMOD_MODE  = 0x4000,
+	KMOD_RESERVED = 0x8000
+} SDLMod;
+*/
+	if(_hid->key_modifiers & 0x0040)  _ctrl_mask |= 0x01;
+	if(_hid->key_modifiers & 0x0001)  _ctrl_mask |= 0x02;
+	if(_hid->key_modifiers & 0x0100)  _ctrl_mask |= 0x04;
 
-	switch (_hid->code) {
-	case 306: 	// Left Ctrl
-		_ctrl_mask = 0x01;
-		break;
-	case 304: 	// Left Shift
-		_ctrl_mask = 0x02;
-		break;
-	case 308: 	// Left Alt
-		_ctrl_mask = 0x04;
-		break;
-	case 305:  // Right Ctrl
-		_ctrl_mask = 0x10;
-		break;
-	case 303: //# Right Shift
-		_ctrl_mask = 0x20;
-		break;
-	case 307: //# Right Alt
-		_ctrl_mask = 0x40;
-		break;
-	}
-	if (_ctrl_mask != 0) {
-		if (_hid->status != 0) {
-			key_status |= _ctrl_mask;
-		} else {
-			key_status &= ~_ctrl_mask;
-		}
-	}
+	if(_hid->key_modifiers & 0x0080)  _ctrl_mask |= 0x10;
+	if(_hid->key_modifiers & 0x0002)  _ctrl_mask |= 0x20;
+	if(_hid->key_modifiers & 0x0200)  _ctrl_mask |= 0x40;
+
+
+
+	key_status = _ctrl_mask;
+
 	if (_hid->status == 0)  // Key release
 		key = 0;
 	buf[ LIBUSB_CONTROL_SETUP_SIZE + 0] = key_status;
@@ -372,7 +374,7 @@ static void USBAndroidHID_reportKey(libusb_device_handle* handle,
 void USBAndroidHID_registerHID(libusb_device_handle* handle) {
 	keyboard_exist = 0;
 	mouse_exist = 0;
-	key_status = 0;
+
 
 #ifdef SUPPORT_HID
 	USBAndroidHID_registerKeyboard(handle);

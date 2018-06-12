@@ -68,6 +68,7 @@ struct _hid_data {
 
 	unsigned int status;
 	int code;   // key sym
+	unsigned int key_modifiers;
 	int16_t x;
 	int16_t y;
 	int16_t dx;

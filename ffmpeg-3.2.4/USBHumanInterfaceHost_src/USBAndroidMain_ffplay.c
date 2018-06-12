@@ -3300,6 +3300,7 @@ static void event_loop(VideoState *cur_stream)
         	_hid.type = 1;
         	_hid.status = 0;
         	_hid.code = event.key.keysym.sym;
+			_hid.key_modifiers = event.key.keysym.mod;
         	MessageNotify_reportHID(&_hid);
         }
             break;
@@ -3309,6 +3310,7 @@ static void event_loop(VideoState *cur_stream)
         	_hid.type = 1;
         	_hid.status = 1;
         	_hid.code = event.key.keysym.sym;
+			_hid.key_modifiers = event.key.keysym.mod;
         	MessageNotify_reportHID(&_hid);
         }
             break;
